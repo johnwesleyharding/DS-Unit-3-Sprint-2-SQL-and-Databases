@@ -2,16 +2,16 @@
 import sqlite3
 import pandas as pd
 
+
+# PART 1 ------------------------------------- Notebook code more recent
 def query(q, db = sqlite3.connect('rpg_db.sqlite3')):
     cursor = db.cursor()
     cursor.execute(q)
     result = cursor.fetchall()
     cursor.close()
     db.commit()
-#     print(result)
     return result
 
-# PART 1 -------------------------------------
 # How many total Characters are there?
 q = "SELECT COUNT (*)\
      FROM charactercreator_character;"
@@ -46,9 +46,9 @@ for i in range(len(result)):
     print(f'Character ID: {i + 1} has {result[i][0]} items.')
 
 # How many Weapons does each character have? (Return first 20 rows)
-result = query('SELECT cc.character_id as ID, cc.name as person, count(aw.power) as weapons FROM charactercreator_character as cc, charactercreator_character_inventory as cci, armory_weapon as aw WHERE cc.character_id = cci.character_id AND aw.item_ptr_id = cci.item_id GROUP BY cc.character_id ORDER BY weapons DESC LIMIT 20;')
+result = query('SELECT cc.character_id as ID, cc.name as person, count(aw.power) as weapons FROM charactercreator_character as cc, charactercreator_character_inventory as cci, armory_weapon as aw WHERE cc.character_id = cci.character_id AND aw.item_ptr_id = cci.item_id GROUP BY cc.character_id ORDER BY weapons DESC, person LIMIT 20;')
 for i in range(len(result)):
-    print(f'{result[i][1]} has {result[i][2]} items.')
+    print(f'{result[i][1]} has {result[i][2]} weapons.')
 
 # On average, how many Items does each Character have?
 result = query('SELECT COUNT (*) FROM charactercreator_character_inventory;')
@@ -61,28 +61,31 @@ print(f'{round(result[0][0] / resultc[0][0], 2)} average weapons per character')
 
 
 # PART 2 -------------------------------------
-df = pd.read_csv('buddymove_holidayiq.csv')
-
+def query(q, db = sqlite3.connect('buddymove_holidayiq.sqlite3')):
+    cursor = db.cursor()
+    cursor.execute(q)
+    result = cursor.fetchall()
+    cursor.close()
+    db.commit()
+    return result
 
 # Open a connection to a new (blank) database file buddymove_holidayiq.sqlite3
-# df.to_sql()
-
-# buddymove_holidayiq.sqlite3
-
+db = sqlite3.connect('buddymove_holidayiq.sqlite3')
 
 # Use df.to_sql (documentation) to insert the data into a new table review in the SQLite3 database
-
-
+df = pd.read_csv('buddymove_holidayiq.csv')
+df.to_sql('review', db)
 
 # Count how many rows you have - it should be 249!
-
-
+result = query('SELECT COUNT(*) FROM review;'')
+print(f'{result[0][0]} rows.')
 
 # How many users who reviewed at least 100 Nature in the category also reviewed at least 100 in the Shopping category?
-
-
+result = query('SELECT COUNT(*) FROM review WHERE Nature >= 100 AND Shopping >= 100;')
+print(f'{result[0][0]} users are interested in nature and shopping.')
 
 # (Stretch) What are the average number of reviews for each category?
-
-
-
+for category in ['Sports', 'Religious', 'Nature', 'Theatre', 'Shopping', 'Picnic']:
+    q = f'SELECT AVG({category}) FROM review;'
+    result = query(q)
+    print(f'Average interest in {category}: {round(result[0][0])}')
